@@ -19,6 +19,7 @@ class Player:
         self.colour = c
         self.boost = False  # is boost active
         self.start_boost = time.time()  # used to control boost length
+        self.boosts = 3
         self.rect = pygame.Rect(self.x - 1, self.y - 1, 2, 2)  # player rect object
 
     def __draw__(self):
@@ -35,7 +36,7 @@ class Player:
         if not self.boost:  # player isn't currently boosting
             self.x += self.bearing[0]
             self.y += self.bearing[1]
-        else:  # player is boosting
+        else:
             self.x += self.bearing[0] * 2
             self.y += self.bearing[1] * 2
 
@@ -43,8 +44,10 @@ class Player:
         """
         starts the player boost
         """
-        self.boost = True
-        self.start_boost = time.time()
+        if self.boosts > 0:
+            self.boosts -= 1
+            self.boost = True
+            self.start_boost = time.time()
 
 
 def new_game():
@@ -68,6 +71,10 @@ objects.append(p1)
 path.append((p1.rect, '1'))
 objects.append(p2)
 path.append((p2.rect, '2'))
+
+wall_rects = [pygame.Rect([0, 0, 15, height]) , pygame.Rect([0, 0, width, 15]),\
+              pygame.Rect([width - 15, 0, 15, height]),\
+              pygame.Rect([0, height - 15, width, 15])]
 
 done = False
 new = False
@@ -101,24 +108,28 @@ while not done:
 
     screen.fill(BLACK)  # clears the screen
 
+    for r in wall_rects: pygame.draw.rect(screen, (42, 42, 42), r, 0)
+
     for o in objects:
         if time.time() - o.start_boost >= 0.5:
             o.boost = False
 
         if (o.rect, '1') in path or (o.rect, '2') in path \
-           or o.x < 0 or o.x > width or o.y < 0 \
-           or o.y > height:  # not yet traversed
+           or o.rect.collidelist(wall_rects) > -1:  # not yet traversed
             if (time.time() - check_time) >= 0.1:
                 check_time = time.time()
                 new = True
                 new_p1, new_p2 = new_game()
                 objects = [new_p1, new_p2]
-                path = [(p1.rect, '1'), (p2.rect, '2')]
+                path = [(p1.rect, '1'), (p2.rect, '2')]s
+                break
         else:
             path.append((o.rect, '1')) if o.colour == P1_COLOUR else path.append((o.rect, '2'))
 
         o.__draw__()
         o.__move__()
+
+    print('loop')
 
     for r in path:
         if new is True:
