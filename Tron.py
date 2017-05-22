@@ -13,19 +13,19 @@ class Player:
         init method for class
         """
         self.x = x  # player x coord
-        self.y = y  # player y coord    
+        self.y = y  # player y coord
         self.speed = 1  # player speed
         self.bearing = b  # player direction
         self.colour = c
         self.boost = False  # is boost active
         self.start_boost = time.time()  # used to control boost length
-        self.rect = pygame.Rect(self.x - 2, self.y - 2, 4, 4)  # player rect object
+        self.rect = pygame.Rect(self.x - 1, self.y - 1, 2, 2)  # player rect object
 
     def __draw__(self):
         """
         method for drawing player
         """
-        self.rect = pygame.Rect(self.x - 2, self.y - 2, 4, 4)  # redefines rect
+        self.rect = pygame.Rect(self.x - 1, self.y - 1, 2, 2)  # redefines rect
         pygame.draw.rect(screen, self.colour, self.rect, 0)  # draws player onto screen
 
     def __move__(self):
@@ -76,7 +76,6 @@ while not done:
         if event.type == pygame.QUIT:  # close button pressed
             done = True
         elif event.type == pygame.KEYDOWN:
-            print(event)
             # === Player 1 === #
             if event.key == pygame.K_w:
                 objects[0].bearing = (0, -2)
@@ -106,7 +105,9 @@ while not done:
         if time.time() - o.start_boost >= 0.5:
             o.boost = False
 
-        if (o.rect, '1') in path or (o.rect, '2') in path:  # not yet traversed
+        if (o.rect, '1') in path or (o.rect, '2') in path \
+           or o.x < 0 or o.x > width or o.y < 0 \
+           or o.y > height:  # not yet traversed
             if (time.time() - check_time) >= 0.1:
                 check_time = time.time()
                 new = True
@@ -115,10 +116,10 @@ while not done:
                 path = [(p1.rect, '1'), (p2.rect, '2')]
         else:
             path.append((o.rect, '1')) if o.colour == P1_COLOUR else path.append((o.rect, '2'))
-        
+
         o.__draw__()
         o.__move__()
-    
+
     for r in path:
         if new is True:
             path = []
@@ -126,7 +127,7 @@ while not done:
             break
         if r[1] == '1': pygame.draw.rect(screen, P1_COLOUR, r[0], 0)
         else: pygame.draw.rect(screen, P2_COLOUR, r[0], 0)
-    
+
     pygame.display.flip()  # flips display
     clock.tick(60)  # regulates FPS
 
