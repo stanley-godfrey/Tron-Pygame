@@ -56,33 +56,39 @@ def new_game():
     return new_p1, new_p2
 
 
-width, height = 640, 640  # window dimensions
+width, height = 600, 660  # window dimensions
+offset = height - width  # vertical space at top of window
 screen = pygame.display.set_mode((width, height))  # creates window
 pygame.display.set_caption("Tron")  # sets window title
+
+font = pygame.font.Font(None, 72)
 
 clock = pygame.time.Clock()  # used to regulate FPS
 check_time = time.time()  # used to check collisions with rects
 
-objects = list()
-path = list()
-p1 = Player(50, height / 2, (2, 0), P1_COLOUR)
-p2 = Player(width - 50, height / 2, (-2, 0), P2_COLOUR)
+objects = list()  # list of all the player objects
+path = list()  # list of all the path rects in the game
+p1 = Player(50, (height- offset) / 2, (2, 0), P1_COLOUR)  # creates player
+p2 = Player(width - 50, (height- offset) / 2, (-2, 0), P2_COLOUR)
 objects.append(p1)
 path.append((p1.rect, '1'))
 objects.append(p2)
 path.append((p2.rect, '2'))
 
-wall_rects = [pygame.Rect([0, 0, 15, height]) , pygame.Rect([0, 0, width, 15]),\
-              pygame.Rect([width - 15, 0, 15, height]),\
-              pygame.Rect([0, height - 15, width, 15])]
+player_score = [0, 0]  # current player score
+
+wall_rects = [pygame.Rect([0, offset, 15, height]) , pygame.Rect([0, offset, width, 15]),\
+              pygame.Rect([width - 15, offset, 15, height]),\
+              pygame.Rect([0, height - 15, width, 15])]  # outer walls of window
 
 done = False
 new = False
+
 while not done:
     for event in pygame.event.get():  # gets all event in last tick
         if event.type == pygame.QUIT:  # close button pressed
             done = True
-        elif event.type == pygame.KEYDOWN:
+        elif event.type == pygame.KEYDOWN:  # keyboard key pressed
             # === Player 1 === #
             if event.key == pygame.K_w:
                 objects[0].bearing = (0, -2)
@@ -108,36 +114,47 @@ while not done:
 
     screen.fill(BLACK)  # clears the screen
 
-    for r in wall_rects: pygame.draw.rect(screen, (42, 42, 42), r, 0)
+    for r in wall_rects: pygame.draw.rect(screen, (42, 42, 42), r, 0)  # draws the walls
 
     for o in objects:
-        if time.time() - o.start_boost >= 0.5:
+        if time.time() - o.start_boost >= 0.5:  # limits boost to 0.5s
             o.boost = False
 
         if (o.rect, '1') in path or (o.rect, '2') in path \
-           or o.rect.collidelist(wall_rects) > -1:  # not yet traversed
+           or o.rect.collidelist(wall_rects) > -1:  # collided with path or wall
+            # prevent player from hitting the path they just made
             if (time.time() - check_time) >= 0.1:
                 check_time = time.time()
+
+                if o.colour == P1_COLOUR:
+                    player_score[1] += 1
+                else: player_score[0] += 1
+
                 new = True
                 new_p1, new_p2 = new_game()
                 objects = [new_p1, new_p2]
-                path = [(p1.rect, '1'), (p2.rect, '2')]s
+                path = [(p1.rect, '1'), (p2.rect, '2')]
                 break
-        else:
+        else:  # not yet traversed
             path.append((o.rect, '1')) if o.colour == P1_COLOUR else path.append((o.rect, '2'))
 
         o.__draw__()
         o.__move__()
 
-    print('loop')
-
     for r in path:
-        if new is True:
+        if new is True  # empties the path - needs to be here to prevent graphical glitches
             path = []
             new = False
             break
         if r[1] == '1': pygame.draw.rect(screen, P1_COLOUR, r[0], 0)
         else: pygame.draw.rect(screen, P2_COLOUR, r[0], 0)
+
+    # display the current score on the screen
+    score_text = font.render('{0} : {1}'.format(player_score[0], player_score[1]), 1, (255, 153, 51))
+    score_text_pos = score_text.get_rect()
+    score_text_pos.centerx = int(width / 2)
+    score_text_pos.centery = int(offset / 2)
+    screen.blit(score_text, score_text_pos)
 
     pygame.display.flip()  # flips display
     clock.tick(60)  # regulates FPS
