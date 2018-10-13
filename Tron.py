@@ -142,7 +142,7 @@ while not done:
         o.__move__()
 
     for r in path:
-        if new is True  # empties the path - needs to be here to prevent graphical glitches
+        if new is True:  # empties the path - needs to be here to prevent graphical glitches
             path = []
             new = False
             break
